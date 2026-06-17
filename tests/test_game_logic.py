@@ -144,55 +144,88 @@ def test_get_range_for_difficulty_low_always_starts_at_one():
 # --- update_score ---
 
 def test_update_score_win_on_first_attempt():
-    # attempt_number=1: 100 - 10*1 = 90
+    # attempt_number=1: 100 - 10*(1-1) = 100
     score = update_score(0, "Win", 1)
-    assert score == 90
- 
+    assert score == 100
+
 def test_update_score_win_on_second_attempt():
-    # attempt_number=2: 100 - 20 = 80
-    score = update_score(0, "Win", 2)
-    assert score == 80
+    # Too Low at attempt 1: 0 - 5 = -5
+    # Win at attempt 2: max(-5 + 90, 0) = 85
+    score = 0
+    score = update_score(score, "Too Low", 1)
+    score = update_score(score, "Win", 2)
+    assert score == 85
 
 def test_update_score_win_on_later_attempt():
-    # attempt_number=5: 100 - 10*5 = 50
-    score = update_score(0, "Win", 5)
-    assert score == 50
+    # Four wrong guesses (attempts 1-4: 4 * -5 = -20), then win on attempt 5
+    # Win bonus: 100 - 10*(5-1) = 60; max(-20 + 60, 0) = 40
+    # Attempt 5 is within Normal difficulty's 6-attempt limit
+    score = 0
+    score = update_score(score, "Too Low", 1)
+    score = update_score(score, "Too High", 2)
+    score = update_score(score, "Too Low", 3)
+    score = update_score(score, "Too High", 4)
+    score = update_score(score, "Win", 5)
+    assert score == 40
 
 def test_update_score_win_minimum_points():
-    # attempt_number=10: 100 - 100 = 0, but floored at 10
-    score = update_score(0, "Win", 10)
-    assert score == 10
+    # Five wrong guesses (attempts 1-5: 5 * -5 = -25), then win on attempt 6
+    # Win bonus: 100 - 10*(6-1) = 50; max(-25 + 50, 0) = 25
+    # Attempt 6 is Normal difficulty's final allowed attempt
+    score = 0
+    for attempt in range(1, 6):
+        score = update_score(score, "Too Low", attempt)
+    score = update_score(score, "Win", 6)
+    assert score == 25
 
 def test_update_score_win_never_below_minimum():
-    # Very late win — points floor at 10, never negative
-    score = update_score(0, "Win", 99)
-    assert score == 10
+    # Seven wrong guesses (attempts 1-7: 7 * -5 = -35), then win on attempt 8
+    # Win bonus: 100 - 10*(8-1) = 30; max(-35 + 30, 0) = max(-5, 0) = 0
+    # Attempt 8 is Easy difficulty's final allowed attempt; max() floors the result at 0
+    score = 0
+    for attempt in range(1, 8):
+        score = update_score(score, "Too High", attempt)
+    score = update_score(score, "Win", 8)
+    assert score == 0
 
 def test_update_score_too_high_deducts_points():
-    # Wrong guess should deduct 5 points from current score
-    score = update_score(50, "Too High", 2)
-    assert score == 45
-
-def test_update_score_too_low_deducts_points():
-    # Wrong guess should deduct 5 points from current score
-    score = update_score(50, "Too Low", 2)
-    assert score == 45
-
-def test_update_score_accumulates_across_guesses():
-    # Multiple guesses should accumulate score changes correctly
+    # A Too High guess deducts 5 points; score can go negative on wrong guesses
     score = 0
-    score = update_score(score, "Too Low", 1)   # 0 - 5 = -5
-    score = update_score(score, "Too High", 2)  # -5 - 5 = -10
-    score = update_score(score, "Win", 3)       # -10 + (100 - 30) = 60
-    assert score == 60
-
-def test_update_score_can_go_negative_on_wrong_guesses():
-    # Multiple wrong guesses can make score negative, but a win can still add points back up
-    score = update_score(0, "Too High", 1)
+    score = update_score(score, "Too High", 1)
     assert score == -5
 
+def test_update_score_too_low_deducts_points():
+    # A Too Low guess deducts 5 points; score can go negative on wrong guesses
+    score = 0
+    score = update_score(score, "Too Low", 1)
+    assert score == -5
+
+def test_update_score_accumulates_across_guesses():
+    # Two wrong guesses then a win; each call builds on the previous running score
+    score = 0
+    score = update_score(score, "Too Low", 1)   # 0  - 5  = -5
+    score = update_score(score, "Too High", 2)  # -5 - 5  = -10
+    score = update_score(score, "Win", 3)       # max(-10 + 80, 0) = 70
+    assert score == 70
+
+def test_update_score_can_go_negative_on_wrong_guesses():
+    # Three wrong guesses in a row (within Hard difficulty's 5-attempt limit) drive the score to -15
+    score = 0
+    score = update_score(score, "Too High", 1)  # -5
+    score = update_score(score, "Too Low", 2)   # -10
+    score = update_score(score, "Too High", 3)  # -15
+    assert score == -15
+
 def test_update_score_win_points_decrease_with_more_attempts():
-    # Winning on earlier attempts should yield more points than winning on later attempts
-    early_win = update_score(0, "Win", 1)
-    late_win = update_score(0, "Win", 7)
-    assert early_win > late_win
+    # Early win (attempt 1, no prior guesses): 100 - 10*(1-1) = 100
+    early_score = 0
+    early_score = update_score(early_score, "Win", 1)
+
+    # Late win at Easy's limit: 7 wrong guesses (7 * -5 = -35) then win at attempt 8
+    # Win bonus: 100 - 10*(8-1) = 30; max(-35 + 30, 0) = 0
+    late_score = 0
+    for attempt in range(1, 8):
+        late_score = update_score(late_score, "Too Low", attempt)
+    late_score = update_score(late_score, "Win", 8)
+
+    assert early_score > late_score

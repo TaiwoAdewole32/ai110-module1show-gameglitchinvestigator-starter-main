@@ -52,10 +52,10 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
     if outcome == "Win":
         #FIX: Removed the off-by-one penalty so the score uses the actual attempt number confirmed through
         # manual testing and  Claude Code's review of the scoring logic. 
-        points = 100 - 10 * attempt_number
+        points = 100 - 10 * (attempt_number - 1)
         if points < 10:
             points = 10
-        return current_score + points
+        return max(current_score + points, 0)
     if outcome == "Too High" or outcome == "Too Low":
         #FIX: Simplified scoring so incorrect guesses consistently subtract points instead of rewarding
         # some wrong guesses 

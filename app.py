@@ -18,6 +18,7 @@ difficulty = st.sidebar.selectbox(
 
 attempt_limit_map = {
     # FIX: After reviewing the difficulty settings with AI, I adjusted the attempt limits so Easy gives more chances and Hard gives fewer.
+    "Easy": 8,
     "Normal": 6,
     "Hard": 5,
 }
