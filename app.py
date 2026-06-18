@@ -1,7 +1,7 @@
 import random
 import streamlit as st
 # FIX: Following the project instructions, I used AI support to check that the imported helper functions could be tested separately from the Streamlit UI.
-from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score
+from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score, load_high_score, update_high_score
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -28,6 +28,12 @@ low, high = get_range_for_difficulty(difficulty)
 
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
+
+if "high_score" not in st.session_state:
+    st.session_state.high_score = load_high_score()
+
+st.sidebar.divider()
+st.sidebar.metric("Best Score", st.session_state.high_score)
 
 if "difficulty" not in st.session_state:
     st.session_state.difficulty = difficulty
@@ -119,10 +125,14 @@ if submit:
         if outcome == "Win":
             st.balloons()
             st.session_state.status = "won"
+            saved_high, is_new_high = update_high_score(st.session_state.score)
+            st.session_state.high_score = saved_high
             st.success(
                 f"You won! The secret was {st.session_state.secret}. "
                 f"Final score: {st.session_state.score}"
             )
+            if is_new_high:
+                st.success("🏆 New High Score!")
         else:
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"

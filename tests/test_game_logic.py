@@ -1,5 +1,7 @@
 
-from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score
+import json
+import pytest
+from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score, load_high_score, save_high_score, update_high_score
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
@@ -15,7 +17,6 @@ def test_guess_too_low():
     # If secret is 50 and guess is 40, hint should be "Too Low"
     outcome, message = check_guess(40, 50)
     assert outcome == "Too Low"
-
 
 # --- parse_guess ---
 
@@ -229,3 +230,120 @@ def test_update_score_win_points_decrease_with_more_attempts():
     late_score = update_score(late_score, "Win", 8)
 
     assert early_score > late_score
+# --- Challenge #1  ---
+def test_parse_guess_with_outer_spaces():
+    """Outer spaces should not break an otherwise valid guess.""" 
+    assert parse_guess(" 16 ") == (True, 16, None)
+
+def test_parse_guess_with_inner_spaces():
+    """Inner spaces should break an otherwise valid guess."""
+    assert parse_guess("1 6") == (False, None, "That is not a number.")
+
+def test_decimal_guess_is_rejected(): 
+    """Decimals should be rejected because the game expects whole numbers.""" 
+    ok, guess, error = parse_guess("12.5") 
+    assert ok is False 
+    assert guess is None 
+    assert "whole number" in error 
+
+def test_easy_mode_attempt_eight_scoring(): 
+    """Winning on Easy attempt 8 should yield a score of 0, not negative.""" 
+    assert update_score(-40, "Win", 8) == 0  # 100 - 10*(8-1) = 30; -40 + 30 = -10, floored to 0
+
+def test_negative_guess_is_always_too_low():
+    # Valid range starts at 1, so any negative guess is below every possible secret
+    outcome, message = check_guess(-1, 1)
+    assert outcome == "Too Low"
+
+
+# --- Challenge #2  ---
+# --- high score: load_high_score ---
+
+def test_load_high_score_missing_file_returns_zero(tmp_path):
+    # A file that does not exist should return 0 rather than raise
+    score = load_high_score(str(tmp_path / "no_such_file.json"))
+    assert score == 0
+
+def test_load_high_score_corrupted_json_returns_zero(tmp_path):
+    # A file with invalid JSON content should be treated as missing and return 0
+    bad_file = tmp_path / "bad.json"
+    bad_file.write_text("this is not json")
+    assert load_high_score(str(bad_file)) == 0
+
+def test_load_high_score_missing_key_returns_zero(tmp_path):
+    # Valid JSON but without the expected key should return 0
+    f = tmp_path / "hs.json"
+    f.write_text(json.dumps({"wrong_key": 999}))
+    assert load_high_score(str(f)) == 0
+
+def test_load_high_score_non_int_value_returns_zero(tmp_path):
+    # A string value for high_score should be rejected and return 0
+    f = tmp_path / "hs.json"
+    f.write_text(json.dumps({"high_score": "not_a_number"}))
+    assert load_high_score(str(f)) == 0
+
+def test_load_high_score_reads_correct_value(tmp_path):
+    # A properly formatted file should return its stored value
+    f = tmp_path / "hs.json"
+    f.write_text(json.dumps({"high_score": 85}))
+    assert load_high_score(str(f)) == 85
+
+
+# --- high score: save_high_score and round-trip ---
+
+def test_save_and_load_high_score_round_trip(tmp_path):
+    # Saving and then loading should return the same value
+    f = str(tmp_path / "hs.json")
+    save_high_score(100, f)
+    assert load_high_score(f) == 100
+
+def test_save_high_score_overwrites_previous(tmp_path):
+    # Saving a new value must replace the old one, not append
+    f = str(tmp_path / "hs.json")
+    save_high_score(50, f)
+    save_high_score(75, f)
+    assert load_high_score(f) == 75
+
+
+# --- high score: update_high_score ---
+
+def test_update_high_score_new_record(tmp_path):
+    # A score higher than what is on disk should be saved and is_new_high True
+    f = str(tmp_path / "hs.json")
+    save_high_score(40, f)
+    best, is_new = update_high_score(90, f)
+    assert best == 90
+    assert is_new is True
+    assert load_high_score(f) == 90
+
+def test_update_high_score_no_new_record(tmp_path):
+    # A score lower than the saved high should not overwrite it
+    f = str(tmp_path / "hs.json")
+    save_high_score(80, f)
+    best, is_new = update_high_score(30, f)
+    assert best == 80
+    assert is_new is False
+    assert load_high_score(f) == 80
+
+def test_update_high_score_equal_score_not_new(tmp_path):
+    # Matching the existing high score exactly should not count as a new record
+    f = str(tmp_path / "hs.json")
+    save_high_score(60, f)
+    best, is_new = update_high_score(60, f)
+    assert best == 60
+    assert is_new is False
+
+def test_update_high_score_first_win_with_missing_file(tmp_path):
+    # When no file exists yet any positive score should set the first record
+    f = str(tmp_path / "hs.json")
+    best, is_new = update_high_score(70, f)
+    assert best == 70
+    assert is_new is True
+    assert load_high_score(f) == 70
+
+def test_update_high_score_preserves_record_across_calls(tmp_path):
+    # Two consecutive wins where the second is lower must not reduce the stored high
+    f = str(tmp_path / "hs.json")
+    update_high_score(100, f)
+    update_high_score(50, f)
+    assert load_high_score(f) == 100
