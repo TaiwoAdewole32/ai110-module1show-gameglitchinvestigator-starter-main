@@ -29,8 +29,8 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | ConsoleOutput / Error |
 |-------|-------------------|-----------------|------------------------|
-| 99 on Normal   | "Too High" hint   | "Too Low" hint  |    none                | 
-| 70 on Hard  |  "Too Low" hint      |  "Too High" hint | Out-of-Bounds |
+| 99 on Normal | "Too High" hint | "Too Low" hint  | none | 
+| 70 on Hard | "Too Low" hint  | "Too High" hint | none|
 | "Attempts left: -3" | 0 or higher | -3 | Attempts left should be positive |
 
 
