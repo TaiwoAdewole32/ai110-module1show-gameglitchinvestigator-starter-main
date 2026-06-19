@@ -92,7 +92,7 @@ def get_range_for_difficulty(difficulty: str) -> tuple[int, int]:
     return 1, 50
 
 
-def parse_guess(raw: str | None) -> tuple[bool, int | None, str | None]:
+def parse_guess(raw: str | None, min_value: int | None = None, max_value: int | None = None) -> tuple[bool, int | None, str | None]:
     """Parse raw user input into a validated integer guess.
 
     Rejects ``None``, empty strings, whitespace-only strings, decimal
@@ -101,6 +101,8 @@ def parse_guess(raw: str | None) -> tuple[bool, int | None, str | None]:
 
     Args:
         raw: The unprocessed string entered by the player.
+        min_value: The minimum allowed value for the guess.
+        max_value: The maximum allowed value for the guess.
 
     Returns:
         A ``(ok, guess, error_message)`` tuple:
@@ -122,6 +124,14 @@ def parse_guess(raw: str | None) -> tuple[bool, int | None, str | None]:
         value = int(raw)
     except Exception:
         return False, None, "That is not a number."
+
+    # FIX: Added range validation to core logic soo invalid guesses 
+    # are rejected even if the UI forgets to check them
+    if min_value is not None and value < min_value:
+        return False, None, f"Guess must be between {min_value} and {max_value}."
+
+    if max_value is not None and value > max_value:
+        return False, None, f"Guess must be between {min_value} and {max_value}."
 
     return True, value, None
 

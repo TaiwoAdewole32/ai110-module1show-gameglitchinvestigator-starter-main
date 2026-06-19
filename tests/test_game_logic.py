@@ -52,8 +52,8 @@ def test_guess_too_low():
 # ---------------------------------------------------------------------------
 
 def test_parse_guess_valid_integer():
-    """A plain integer string should parse successfully."""
-    ok, value, err = parse_guess("42")
+    """A plain integer string within the difficulty range should parse successfully."""
+    ok, value, err = parse_guess("42", min_value=1, max_value=50)
     assert ok is True
     assert value == 42
     assert err is None
@@ -61,7 +61,7 @@ def test_parse_guess_valid_integer():
 
 def test_parse_guess_empty_string():
     """An empty string should be rejected with an error message."""
-    ok, value, err = parse_guess("")
+    ok, value, err = parse_guess("", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -69,7 +69,7 @@ def test_parse_guess_empty_string():
 
 def test_parse_guess_none():
     """None input should be rejected with an error message."""
-    ok, value, err = parse_guess(None)
+    ok, value, err = parse_guess(None, min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -77,7 +77,7 @@ def test_parse_guess_none():
 
 def test_parse_guess_decimal_rejected():
     """A decimal string should be rejected because the game expects whole numbers."""
-    ok, value, err = parse_guess("49.0")
+    ok, value, err = parse_guess("49.0", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -85,7 +85,7 @@ def test_parse_guess_decimal_rejected():
 
 def test_parse_guess_random_string():
     """A non-numeric string should be rejected with an error message."""
-    ok, value, err = parse_guess("hello")
+    ok, value, err = parse_guess("hello", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -93,31 +93,55 @@ def test_parse_guess_random_string():
 
 def test_parse_guess_special_characters():
     """A string of special characters should be rejected."""
-    ok, value, err = parse_guess("!@#$")
+    ok, value, err = parse_guess("!@#$", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
 
 
-def test_parse_guess_negative_integer():
-    """Negative integers should parse correctly as valid guesses."""
-    ok, value, err = parse_guess("-5")
+def test_parse_guess_negative_integer_rejected_by_range():
+    """A negative integer should be rejected because it falls below the difficulty minimum."""
+    ok, value, err = parse_guess("-5", min_value=1, max_value=50)
+    assert ok is False
+    assert value is None
+    assert err is not None
+
+
+def test_parse_guess_zero_rejected_by_range():
+    """Zero should be rejected because all difficulties start at 1."""
+    ok, value, err = parse_guess("0", min_value=1, max_value=50)
+    assert ok is False
+    assert value is None
+    assert err is not None
+
+
+def test_parse_guess_above_max_rejected():
+    """A number above the difficulty maximum should be rejected."""
+    ok, value, err = parse_guess("51", min_value=1, max_value=50)
+    assert ok is False
+    assert value is None
+    assert err is not None
+
+
+def test_parse_guess_at_min_boundary_accepted():
+    """A guess exactly at the minimum should be accepted."""
+    ok, value, err = parse_guess("1", min_value=1, max_value=50)
     assert ok is True
-    assert value == -5
+    assert value == 1
     assert err is None
 
 
-def test_parse_guess_zero():
-    """Zero should parse correctly as a valid guess."""
-    ok, value, err = parse_guess("0")
+def test_parse_guess_at_max_boundary_accepted():
+    """A guess exactly at the maximum should be accepted."""
+    ok, value, err = parse_guess("50", min_value=1, max_value=50)
     assert ok is True
-    assert value == 0
+    assert value == 50
     assert err is None
 
 
 def test_parse_guess_whitespace():
     """A whitespace-only string should be rejected."""
-    ok, value, err = parse_guess("   ")
+    ok, value, err = parse_guess("   ", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -125,7 +149,7 @@ def test_parse_guess_whitespace():
 
 def test_parse_guess_integer_with_inner_spaces():
     """An integer with an internal space (e.g. '4 2') should be rejected."""
-    ok, value, err = parse_guess("4 2")
+    ok, value, err = parse_guess("4 2", min_value=1, max_value=50)
     assert ok is False
     assert value is None
     assert err is not None
@@ -135,17 +159,17 @@ def test_parse_guess_integer_with_inner_spaces():
 
 def test_parse_guess_with_outer_spaces():
     """Leading/trailing spaces around a valid integer should be accepted."""
-    assert parse_guess(" 16 ") == (True, 16, None)
+    assert parse_guess(" 16 ", min_value=1, max_value=50) == (True, 16, None)
 
 
 def test_parse_guess_with_inner_spaces():
     """An internal space between digits should be rejected."""
-    assert parse_guess("1 6") == (False, None, "That is not a number.")
+    assert parse_guess("1 6", min_value=1, max_value=50) == (False, None, "That is not a number.")
 
 
 def test_decimal_guess_is_rejected():
     """Decimals must be rejected; the game expects whole-number guesses."""
-    ok, guess, error = parse_guess("12.5")
+    ok, guess, error = parse_guess("12.5", min_value=1, max_value=50)
     assert ok is False
     assert guess is None
     assert "whole number" in error
