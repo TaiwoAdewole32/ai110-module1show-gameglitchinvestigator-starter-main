@@ -82,7 +82,7 @@ I applied those changes by breaking long lines into shorter readable lines and d
 |-|---------|---------|
 | **Model name** | ChatGPT | Claude Code |
 | **Response summary** | ChatGPT suggested converting both guess and secret to integers inside check_guess() before comparing them, which made the function more defensive against wrong input types. Its fix was readable and easy to understand, but it mixed input validation into check_guess() instead of keeping validation separate in parse_guess() | Claude Code suggested removing the old try/except TypeError logic because it was only covering up a deeper bug where the secret number was sometimes treated like a string. Its explanation was stronger because it clearly explained why string comparison was wrong and why check_guess() should expect integer inputs after parse_guess() handles validation |
-| **More Pythonic?** | ChatGPT was less pythonic and used a more simple way to handle the problem | Claude Code was Pythonic because it added more barriers that made the solution with more complex ideas |
+| **More Pythonic?** | ChatGPT was less pythonic and used a more simple/traditonal way when it came to implementing a solution | Claude Code was Pythonic because used more elegant and clean code that made the solution with more complex ideas |
 | **Clearer explanation?** | ChatGPT had a clearer explaination and was more straighforward overall | Claude Code was more techinal with the explation making it bit more challenge to dissect |
 
 **Which did you prefer and why?**
