@@ -25,9 +25,9 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] Describe the game's purpose.
+- [x] Detail which bugs you found.
+- [x] Explain what fixes you applied.
 
 The purpose of my game is to create an interactive number guessing game where the player tries to guess a randomly chosen secret number wwithin a specific range. The game gives feedback after each guess by telling the user whether their guess is too high, too low, or correct. It also treacks the player's score and updates the game state as the user continues playing. This project helped me practice separating game logic from the user interface, writing automated tests, and using AI as a coding assistant to debug and improve my work
 
@@ -64,9 +64,16 @@ Describe your fixed game in numbered steps so a reader can follow along without 
 
 ```
 
-# Paste your pytest output here, e.g.:
-# pytest tests/
-# ============================================================================ 47 passed in 0.09s =============================================================================
+# Paste your pytest output here
+============================================================================ test session starts ============================================================================
+platform win32 -- Python 3.13.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: C:\Users\tade4\OneDrive\Documents\GitHub\ai110-module1show-gameglitchinvestigator-starter-main
+plugins: anyio-4.13.0
+collected 47 items                                                                                                                                                           
+
+tests\test_game_logic.py ...............................................                                                                                               [100%]
+
+============================================================================ 47 passed in 0.07s =============================================================================
 ```
 
 ## 🚀 Stretch Features
