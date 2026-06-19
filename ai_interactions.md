@@ -77,6 +77,7 @@ I applied those changes by breaking long lines into shorter readable lines and d
 **Task given to both models:**
 
 <!-- Describe what you asked each model to do -->
+I asked both models to fix the backwards higher/lower hint bug in `check_guess()` and explain whether input validation should happen inside `check_guess()`.
 
 | | Model A | Model B |
 |-|---------|---------|
